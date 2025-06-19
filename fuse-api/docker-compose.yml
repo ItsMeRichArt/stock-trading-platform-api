@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fuse_trading
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/fuse_trading?schema=public"
+      NODE_ENV: "development"
+      PORT: 3000
+      VENDOR_API_BASE_URL: "https://api.challenge.fusefinance.com"
+      VENDOR_API_KEY: "nSbPbFJfe95BFZufiDwF32UhqZLEVQ5K4wdtJI2e"
+      SMTP_HOST: "smtp.gmail.com"
+      SMTP_PORT: 587
+      SMTP_SECURE: "false"
+      SMTP_USER: "your-email@gmail.com"
+      SMTP_PASS: "your-app-password"
+      SMTP_FROM: "noreply@fusetrading.com"
+      API_RETRY_ATTEMPTS: 3
+      API_RETRY_DELAY: 1000
+      DAILY_REPORT_CRON: "0 9 * * *"
+      DAILY_REPORT_RECIPIENTS: "admin@fusetrading.com"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    command: >
+      sh -c "
+        npx prisma migrate deploy &&
+        npm run start:prod
+      "
+
+  # Redis (optional, for caching)
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

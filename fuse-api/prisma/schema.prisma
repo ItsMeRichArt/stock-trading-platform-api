@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  portfolios Portfolio[]
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+model Stock {
+  id     String @id @default(cuid())
+  symbol String @unique
+  name   String
+  price  Float
+  lastUpdated DateTime @default(now())
+
+  // Relations
+  portfolioStocks PortfolioStock[]
+  transactions    Transaction[]
+
+  @@map("stocks")
+}
+
+model Portfolio {
+  id     String @id @default(cuid())
+  userId String
+  name   String @default("Default Portfolio")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stocks PortfolioStock[]
+
+  @@map("portfolios")
+}
+
+model PortfolioStock {
+  id          String @id @default(cuid())
+  portfolioId String
+  stockId     String
+  quantity    Int
+  averagePrice Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  stock     Stock     @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, stockId])
+  @@map("portfolio_stocks")
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  userId      String
+  stockId     String
+  portfolioId String?
+  type        TransactionType
+  quantity    Int
+  price       Float
+  totalAmount Float
+  status      TransactionStatus @default(PENDING)
+  errorMessage String?
+  createdAt   DateTime @default(now())
+  processedAt DateTime?
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stock Stock @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+enum TransactionType {
+  BUY
+  SELL
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}

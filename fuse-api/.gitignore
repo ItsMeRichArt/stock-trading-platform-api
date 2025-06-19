@@ -1,0 +1,29 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+# Logs
+logs/*.log
+!logs/.gitkeep
+
+# Build output
+dist
+build
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage
+
+# Docker
+.dockerignore
