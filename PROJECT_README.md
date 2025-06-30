@@ -1,4 +1,4 @@
-# Fuse Trading API
+# Stock trading platform API
 
 A backend service for stock trading operations that integrates with Fuse's mock API to list available stocks, manage user portfolios, and execute purchase transactions.
 
